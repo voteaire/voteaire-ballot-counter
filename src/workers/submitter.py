@@ -1,7 +1,7 @@
-"""A worker that makes a POST request to an arbitrary URL for every proposal which has ended
-with it's voting results"""
-
 import os
+import time
+import dotenv
+import logging
 import requests
 
 from model import db
@@ -13,80 +13,116 @@ from model.question import Question
 from model.processed_log import ProcessedLog
 from model.blockfrost_queue import BlockfrostQueue
 
-from lib import config_utils
+from lib import signature_utils, cache
 from workers import chain
 
 from flask import Flask
 from flask_migrate import Migrate
 
-from sqlalchemy import create_engine
+from sqlalchemy import and_, func
 from sqlalchemy.orm import sessionmaker
 
 from meta.metadata_processor import MetadataProcessor
 
 
-def run_submitter_worker(chain_provider):
+CURRENT_EPOCH_CACHE = 60 * 60 * 5  # 5 hours
+
+
+def count_votes(choice_id):
+    total_votes = (
+        VoteChoice.query.join(Vote)
+        .filter(and_(VoteChoice.choice_id == choice_id, Vote.status == "on-chain"))
+        .count()
+    )
+
+    total_weight = (
+        VoteChoice.query.join(Vote)
+        .filter(and_(VoteChoice.choice_id == choice_id, Vote.status == "on-chain"))
+        .with_entities(func.sum(Vote.weight).label("weight_sum"))
+        .scalar()
+    )
+
+    return {"votes_count": total_votes, "votes_weight": total_weight}
+
+
+def parse_result(result):
+    """Convert the voting results into a string with the format
+    <weight1question1>,<weight2question1>|<weight1question2>,<weight2question2>,..."""
+
+    result_string = ""
+    for question, choices in result.items():
+        question_result = ""
+        for choice, count in choices.items():
+            question_result += f"{count['votes_weight']},"
+        question_result = question_result[:-1]
+        result_string += f"{question_result}|"
+
+    return result_string[:-1]
+
+
+def run_submitter_worker(chain_provider, interval=10):
     """A worker that makes a POST request to an arbitrary URL for every proposal which has ended
     with it's voting results"""
 
-    current_epoch = chain_provider.get_current_epoch()["epoch"]
+    dotenv.load_dotenv()
 
-
-    # Get all proposals that have ended
-    proposals = Proposal.query.filter(Proposal.end_epoch < current_epoch).all()
-
-    results = []
-    for proposal in proposals:
-
-        result = {}
-        any_is_not_none = False
-        for question in proposal.questions:
-            for choice in question.choices:
-
-                if proposal.status != "on-chain":
-                    choice["choice_votes"] = None
-                    choice["choice_weight"] = None
-
-                    del choice["id"]
-                else:
-                    votes = count_votes(choice_id=choice["id"])
-
-                    del choice["id"]
-                    choice["choice_votes"] = votes["votes_count"]
-                    choice["choice_weight"] = votes["votes_weight"]
-
-                if choice["choice_weight"] is not None:
-                    any_is_not_none = True
-
-        if any_is_not_none:
-            for question in result["questions"]:
-                for choice in question["responses"]:
-                    if choice["choice_weight"] is None:
-                        choice["choice_weight"] = 0
-
-        total_votes = (
-            VoteChoice.query.join(Vote)
-            .filter(and_(VoteChoice.choice_id == choice_id, Vote.status == "on-chain"))
-            .count()
+    while True:
+        current_epoch = cache.cache.get_or_set(
+            "current_epoch",
+            lambda: chain_provider.get_current_epoch()["epoch"],
+            CURRENT_EPOCH_CACHE,
         )
 
-        total_weight = (
-            VoteChoice.query.join(Vote)
-            .filter(and_(VoteChoice.choice_id == choice_id, Vote.status == "on-chain"))
-            .with_entities(func.sum(Vote.weight).label("weight_sum"))
-            .scalar()
-        )
+        # current_epoch = chain_provider.get_current_epoch()["epoch"]
 
-        # Create a dict with all the data
-        data = {
-            "proposal": proposal,
-            "questions": questions,
-            "votes": votes,
-            "choices": choices,
-            "vote_choices": vote_choices,
-            "processed_logs": processed_logs,
-            "blockfrost_queues": blockfrost_queues,
-        }
+        # Get all proposals that have ended
+        proposals = Proposal.query.filter(
+            and_(current_epoch > Proposal.end_epoch, Proposal.status == "on-chain")
+        ).all()
 
-        # Make a POST request to the URL
-        requests.post(os.environ.get("SUBMITTER_URL"), json=data)
+        for proposal in proposals:
+            logging.info(
+                f"Processing submission info for proposal {proposal.proposal_identifier}..."
+            )
+
+            result = {}
+            for question in proposal.questions:
+                result[question.question_identifier] = {}
+                for choice in question.choices:
+                    count = count_votes(choice_id=choice.id)
+
+                    if count["votes_weight"] is None:
+                        count["votes_weight"] = 0
+                    if count["votes_count"] is None:
+                        count["votes_count"] = 0
+
+                    result[question.question_identifier][
+                        choice.choice_identifier
+                    ] = count
+
+            proposal.status = "notified"
+
+            db.session.add(proposal)
+            db.session.commit()
+
+            secret_key = os.environ.get("ORACLE_SKEY")
+            if secret_key is None:
+                raise ValueError("ORACLE_SKEY is not set")
+
+            signed_result = signature_utils.sign(
+                secret_key[4:], parse_result(result).encode("utf-8").hex()
+            )
+
+            logging.warning(
+                {
+                    "proposal": proposal.proposal_identifier,
+                    "result": result,
+                    "result_string": parse_result(result),
+                    "signed_result": signed_result,
+                }
+            )
+
+            # # Make a POST request to the URL
+            # requests.post(os.environ.get("SUBMITTER_URL"), json=data)
+
+        time.sleep(interval)

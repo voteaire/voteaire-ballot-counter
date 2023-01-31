@@ -60,6 +60,19 @@ services:
     
     command: ["./wait-for-it.sh", "db:5432", "--", "python3", "-u", "./weight-worker.py"]
 
+  submitter-worker:
+    build:
+      context: .
+      dockerfile: ./docker/submitter.Dockerfile
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      - db
+      - api
+      - kupo
+    
+    command: ["./wait-for-it.sh", "db:5432", "--", "python3", "-u", "./submitter-worker.py"]
+
   cardano-node:
     image: inputoutput/cardano-node:${CARDANO_NODE_VERSION:-1.35.4}
     entrypoint: bash
