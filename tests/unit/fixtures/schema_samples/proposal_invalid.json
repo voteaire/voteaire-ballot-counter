@@ -1,0 +1,36 @@
+{
+  "ObjectType": "BallotProposal",
+  "ObjectVersion": "1.0.0",
+  "NetworkID": "Voteaire",
+  "ProposalURL": "https://canucks-publishing.com",
+  "BallotType": {
+    "Name": "Simple"
+  },
+  "Title": "Pineapple on pizza?",
+  "Questions": [
+    {
+      "QuestionId": "36f06c15-5a2d-4c7c-bf56-ffb2affb8320",
+      "Question": "Do you think people should be allowed to put pineapple on pizza? really long string now",
+      "Description": [
+        "People have been putting odd things on pizza for centuries, however ",
+        "pineapple is a particularly polarizing topping."
+      ],
+      "ChoiceLimit": 1,
+      "Choices": [
+        {
+          "ChoiceID": "c17d31d5-3bea-41b9-91fc-e9adba00daee",
+          "Name": "Hell yeah, pineapple is great!",
+          "Description": []
+        },
+        {
+          "ChoiceID": "b0fbc41a-13ff-415f-8516-defef00b6980",
+          "Name": "Are you crazy? No way!",
+          "Description": []
+        }
+      ]
+    }
+  ],
+  "VoteStartEpoch": 329,
+  "VoteEndEpoch": 329,
+  "SnapshotEpoch": 328
+}

@@ -1,0 +1,55 @@
+openapi: 3.0.0
+servers:
+  - url: http://localhost:5000/
+    description: Mock server - run by connexion command line
+  - url: http://localhost:8080/
+    description: Local test server (docker compose)
+  - url: http://localhost:8081/
+    description: Local test server - running directly
+
+info:
+  description: Voteaire API
+  version: "1.0.0"
+  title: Voteaire API
+  contact:
+    email: info@canucks-publishing.com
+
+paths:
+  /health:
+    get:
+      summary: provides a health check for the application
+      operationId: api.health.get
+      description: |
+        Gets the health of the application
+      responses:
+        "200":
+          description: Successful health check - status will be 'ok' if health is good
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+        "500":
+          description: Unsuccessful health check
+
+
+components:
+
+  schemas:
+    HealthStatus:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: ["ok", "fail", "warn"]
+          example: "ok"
+        version:
+          type: integer
+          example: 1
+        releaseId:
+          type: string
+          example: 1be37
+        output:
+          type: string
+          example: ""

@@ -1,0 +1,12 @@
+{
+    "ObjectType": "VoteBallot",
+    "ObjectVersion": "1.0.0",
+    "VoteId": "3521e790-18da-45d0-a70b-28821391d6da",
+    "ProposalId": "52da18fb-64ec-4d00-9484-fdb0b67ef678",
+    "Choices": [
+        {
+            "QuestionId": "36f06c15-5a2d-4c7c-bf56-ffb2affb8320",
+            "ChoiceId": "c17d31d5-3bea-41b9-91fc-e9adba00daee"
+        }
+    ]
+}

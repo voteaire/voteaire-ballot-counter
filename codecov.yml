@@ -1,0 +1,17 @@
+ignore:
+  - "./tests/*"
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 50%
+        paths:
+          - "src"
+    patch: off
+comment: # this is a top-level key
+  layout: "diff"
+  behavior: default
+  require_changes: false
+codecov:
+  branch: dev

@@ -1,0 +1,16 @@
+LOGLEVEL=DEBUG
+DB_CONN=sqlite:////tmp/test.db
+
+LABEL=1916
+
+# blockfrost | mock
+QUEUE_PROVIDER=blockfrost
+CHAIN_PROVIDER=blockfrost
+
+BLOCKFROST_PROJECT_ID=xxxx
+BLOCKFROST_API_URL=xxx
+
+SNAPSHOTTER_ENDPOINT=http://localhost:8081/
+
+PLATFORM_ADDRESS=addr_test123
+NETWORK_MODE=TESTNET

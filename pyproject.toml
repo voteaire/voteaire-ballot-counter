@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "voteaire-counter"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "voteaire_counter"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+blockfrost-python = "0.5.2"
+connexion = "2.9.0"
+flask-cors = "3.0.10"
+flask-migrate = "3.1.0"
+flask-sqlalchemy = "2.5.1"
+jsonschema = "3.2.0"
+markupsafe = "2.0.1"
+newrelic = "7.10.0.175"
+psycopg2-binary = "2.9.3"
+python-dotenv = "0.19.2"
+sqlalchemy = "1.4.27"
+swagger-ui-bundle = "0.0.9"
+pycardano = "^0.7.2"
+requests = "^2.28.2"
+
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "2.20.0"
+pytest = "7.1.1"
+pytest-cov = "3.0.0"
+pytest-mock = "3.6.1"
+black = {version = "^23.1a1", allow-prereleases = true}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

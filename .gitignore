@@ -1,0 +1,22 @@
+.env
+__pycache__
+.venv
+*.pyc
+
+secrets
+.coverage
+coverage.xml
+
+*.db
+
+importlib
+atexit
+keys
+
+# terraform + terraformer
+tf/.terraform/*
+tf/terraformer/*
+tf/terraform.tfstate.backup
+
+# vscode
+.vscode

@@ -1,0 +1,138 @@
+version: "3.9"  # optional since v1.27.0
+
+networks:
+  cluster:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
+services:
+  db:
+    build:
+      context: ./docker
+      dockerfile: pg.Dockerfile
+    image: pg
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres-passwd
+    secrets:
+      - postgres-passwd
+    ports:
+      - 3001:5432
+
+  api:
+    build:
+      context: .
+      dockerfile: ./docker/api.Dockerfile
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      - db
+      - kupo
+    ports:
+      - 8080:80
+    hostname: 'api'
+    command: ["./wait-for-it.sh", "db:5432", "--", "/start.sh"]
+
+  chain-worker:
+    build:
+      context: .
+      dockerfile: ./docker/chain.Dockerfile
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      - db
+      - api
+      - kupo
+    command: ["./wait-for-it.sh", "db:5432", "--", "python3", "-u", "./chain-worker.py"]
+
+  weight-worker:
+    build:
+      context: .
+      dockerfile: ./docker/weight.Dockerfile
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      - db
+      - api
+      - kupo
+    
+    command: ["./wait-for-it.sh", "db:5432", "--", "python3", "-u", "./weight-worker.py"]
+
+  cardano-node:
+    image: inputoutput/cardano-node:${CARDANO_NODE_VERSION:-1.35.4}
+    entrypoint: bash
+    environment:
+      NETWORK: "${NETWORK:-preprod}"
+    command: /code/run_node.sh
+
+    networks:
+      cluster:
+        ipv4_address: 172.20.0.101
+
+    volumes:
+      - ./node:/code
+      - node-db:/data/db
+      - node-ipc:/ipc
+    ports:
+      - ${BFT_NODE_PORT:-3000}:3000
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+
+  ogmios:
+    image: cardanosolutions/ogmios:v5.5.8_1.35.4
+    environment:
+      NETWORK: "${NETWORK:-preprod}"
+
+    command: [
+      "--host", "0.0.0.0",
+      "--node-socket", "/ipc/node.socket",
+      "--node-config", "/code/configs/config.json"
+    ]
+    volumes:
+      - ./node:/code
+      - node-ipc:/ipc
+    ports:
+      - ${OGMIOS_PORT:-1337}:1337
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+
+  kupo:
+    image: cardanosolutions/kupo:v2.3.3
+    environment:
+      NETWORK: "${NETWORK:-preprod}"
+
+    command: [
+      "--node-socket", "/ipc/node.socket",
+      "--node-config", "/code/configs/config.json",
+      "--host", "0.0.0.0",
+      "--since", "origin",
+      "--match", "*",
+      "--workdir", "/data/kupo/db"
+    ]
+    volumes:
+      - ./node:/code
+      - node-ipc:/ipc
+      - kupo-db:/data/kupo/db
+    ports:
+      - ${KUPO_PORT:-1442}:1442
+    logging:
+      driver: none
+
+
+
+volumes:
+  db-data:
+  kupo-db:
+  node-db:
+  node-ipc:
+secrets:
+  postgres-passwd:
+    file: ./secrets/postgres-passwd

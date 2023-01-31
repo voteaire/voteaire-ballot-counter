@@ -1,0 +1,76 @@
+[
+  {
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/voteaire-testnet-weight-worker",
+        "awslogs-region": "ca-central-1",
+        "awslogs-stream-prefix": "ecs"
+      }
+    },
+    "portMappings": [],
+    "command": [
+      "python3",
+      "-u",
+      "./weight-worker.py"
+    ],
+    "cpu": 0,
+    "environment": [
+      {
+        "name": "BLOCKFROST_API_URL",
+        "value": "https://cardano-testnet.blockfrost.io/api"
+      },
+      {
+        "name": "LOGLEVEL",
+        "value": "INFO"
+      },
+      {
+        "name": "CHAIN_PROVIDER",
+        "value": "blockfrost"
+      },
+      {
+        "name": "QUEUE_PROVIDER",
+        "value": "blockfrost"
+      },
+      {
+        "name": "SNAPSHOTTER_ENDPOINT",
+        "value": "https://dev-snapshotter-api.voteaire.io"
+      },
+      {
+        "name": "NETWORK_MODE",
+        "value": "TESTNET"
+      },
+      {
+        "name": "NEW_RELIC_LOG",
+        "value": "stdout"
+      },
+      {
+        "name": "NEW_RELIC_DISTRIBUTED_TRACING_ENABLED",
+        "value": "true"
+      },
+      {
+        "name": "NEW_RELIC_APP_NAME",
+        "value": "Voteaire Testnet Weight Worker Prod"
+      }
+    ],
+    "secrets": [
+      {
+        "name": "BLOCKFROST_PROJECT_ID",
+        "valueFrom": "arn:aws:secretsmanager:ca-central-1:044223142297:secret:prod/testnet-voteaire/blockfrost-qvBX3P:key::"
+      },
+      {
+        "name": "DB_CONN",
+        "valueFrom": "arn:aws:secretsmanager:ca-central-1:044223142297:secret:prod/testnet-voteaire/rds-string-5LG2Ph:key::"
+      },
+      {
+        "name": "NEW_RELIC_LICENSE_KEY",
+        "valueFrom": "arn:aws:secretsmanager:ca-central-1:044223142297:secret:prod/voteaire/new-relic-tCSVhR:key::"
+      }
+    ],
+    "mountPoints": [],
+    "volumesFrom": [],
+    "image": "044223142297.dkr.ecr.ca-central-1.amazonaws.com/voteaire-weight-worker:r0.0.8",
+    "essential": true,
+    "name": "voteaire-weight-worker"
+  }
+]

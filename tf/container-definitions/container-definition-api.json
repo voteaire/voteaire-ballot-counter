@@ -1,0 +1,69 @@
+[
+  {
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/voteaire-testnet-api",
+        "awslogs-region": "ca-central-1",
+        "awslogs-stream-prefix": "ecs"
+      }
+    },
+    "portMappings": [
+      {
+        "hostPort": 80,
+        "protocol": "tcp",
+        "containerPort": 80
+      }
+    ],
+    "cpu": 0,
+    "environment": [
+      {
+        "name": "BLOCKFROST_API_URL",
+        "value": "https://cardano-testnet.blockfrost.io/api"
+      },
+      {
+        "name": "LOGLEVEL",
+        "value": "INFO"
+      },
+      {
+        "name": "PLATFORM_ADDRESS",
+        "value": "addr_test1qq3nttpytvya8d6p4wldu8s5qzhqcmknsv0defklp0hst6fknfd8qza0tgcw2ed9vr8vhr9kaztzvcecfx2slvydrkvq272u38"
+      },
+      {
+        "name": "NETWORK_MODE",
+        "value": "TESTNET"
+      },
+      {
+        "name": "NEW_RELIC_LOG",
+        "value": "stdout"
+      },
+      {
+        "name": "NEW_RELIC_DISTRIBUTED_TRACING_ENABLED",
+        "value": "true"
+      },
+      {
+        "name": "NEW_RELIC_APP_NAME",
+        "value": "Voteaire Testnet API Prod"
+      }
+    ],
+    "secrets": [
+      {
+        "name": "BLOCKFROST_PROJECT_ID",
+        "valueFrom": "arn:aws:secretsmanager:ca-central-1:044223142297:secret:prod/testnet-voteaire/blockfrost-qvBX3P:key::"
+      },
+      {
+        "name": "DB_CONN",
+        "valueFrom": "arn:aws:secretsmanager:ca-central-1:044223142297:secret:prod/testnet-voteaire/rds-string-5LG2Ph:key::"
+      },
+      {
+        "name": "NEW_RELIC_LICENSE_KEY",
+        "valueFrom": "arn:aws:secretsmanager:ca-central-1:044223142297:secret:prod/voteaire/new-relic-tCSVhR:key::"
+      }
+    ],
+    "mountPoints": [],
+    "volumesFrom": [],
+    "image": "044223142297.dkr.ecr.ca-central-1.amazonaws.com/voteaire-api:r0.0.8",
+    "essential": true,
+    "name": "api"
+  }
+]
