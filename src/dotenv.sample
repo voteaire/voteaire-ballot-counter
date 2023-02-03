@@ -1,16 +1,14 @@
 LOGLEVEL=DEBUG
-DB_CONN=sqlite:////tmp/test.db
 
-LABEL=1916
+# DB_CONN="postgresql://postgres:<db-password>@db/voteaire"
+DB_CONN=sqlite:///
 
-# blockfrost | mock
 QUEUE_PROVIDER=blockfrost
 CHAIN_PROVIDER=blockfrost
 
-BLOCKFROST_PROJECT_ID=xxxx
-BLOCKFROST_API_URL=xxx
+BLOCKFROST_PROJECT_ID=<project_id>
+BLOCKFROST_API_URL=https://cardano-preprod.blockfrost.io/api
 
-SNAPSHOTTER_ENDPOINT=http://localhost:8081/
+NETWORK_MODE="TESTNET"
 
-PLATFORM_ADDRESS=addr_test123
-NETWORK_MODE=TESTNET
+ORACLE_SKEY=<skey>
