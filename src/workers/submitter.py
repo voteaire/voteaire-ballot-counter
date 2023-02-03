@@ -53,7 +53,7 @@ def parse_result(result):
     for question, choices in result.items():
         question_result = ""
         for choice, count in choices.items():
-            question_result += f"{count['votes_weight']},"
+            question_result += f"{count['votes_weight']}:{count['votes_count']},"
         question_result = question_result[:-1]
         result_string += f"{question_result}|"
 
